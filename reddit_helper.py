@@ -96,7 +96,7 @@ def analyze_vocabulary(texts, min_freq=2):
     
     return freq_df, stats
 
-def analyze_subreddit(posts, max_terms=1000, min_doc_freq=2):
+def analyze_subreddit(posts, max_terms=1000, min_doc_freq=2, top_n_terms=5):
     """
     Analyze a single subreddit's posts independently.
     """
@@ -134,7 +134,7 @@ def analyze_subreddit(posts, max_terms=1000, min_doc_freq=2):
     return {
         'vocab_stats': vocab_stats,
         'freq_distribution': freq_df,
-        'top_terms': top_terms.head(),
+        'top_terms': top_terms.head(top_n_terms),
         'vectorizer': vectorizer,
         'matrix_shape': tfidf_matrix.shape,
         'matrix_sparsity': 100 * (1 - tfidf_matrix.nnz / (tfidf_matrix.shape[0] * tfidf_matrix.shape[1]))
