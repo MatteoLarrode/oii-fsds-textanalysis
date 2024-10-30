@@ -139,3 +139,10 @@ def analyze_subreddit(posts, max_terms=1000, min_doc_freq=2, top_n_terms=5):
         'matrix_shape': tfidf_matrix.shape,
         'matrix_sparsity': 100 * (1 - tfidf_matrix.nnz / (tfidf_matrix.shape[0] * tfidf_matrix.shape[1]))
     }
+
+def remove_punctuation(text):
+    """
+    Remove punctuation
+    """
+    # Using regex to replace punctuation with an empty string
+    return re.sub(r'[^\w\s]', '', text)
