@@ -10,3 +10,5 @@ scikit-learn
 Jinja2
 os
 pyarrow
+datetime
+matplotlib
