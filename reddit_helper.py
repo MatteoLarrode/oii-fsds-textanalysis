@@ -2,10 +2,13 @@ import requests
 import time
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from collections import Counter
 from sklearn.feature_extraction.text import TfidfVectorizer
 from nltk.corpus import stopwords
 import re
+from datetime import datetime, timezone
+from dateutil import tz
 
 class RedditScraper:
     def __init__(self, user_agent):
@@ -140,9 +143,63 @@ def analyze_subreddit(posts, max_terms=1000, min_doc_freq=2, top_n_terms=5):
         'matrix_sparsity': 100 * (1 - tfidf_matrix.nnz / (tfidf_matrix.shape[0] * tfidf_matrix.shape[1]))
     }
 
-def remove_punctuation(text):
+def preprocess_text(text):
     """
-    Remove punctuation
+    Remove punctuation and normalize text to lowercase.
     """
-    # Using regex to replace punctuation with an empty string
-    return re.sub(r'[^\w\s]', '', text)
+    clean_text = re.sub(r'[^\w\s]', '', text)  # Remove punctuation
+    return clean_text.lower()
+
+def calculate_term_frequency(text, terms):
+    """
+    Calculate term frequency for each specified term in the given text.
+    
+    Returns:
+    - A dictionary with term counts and term frequencies.
+    """
+    term_counts = {}
+    words = text.split()
+    total_word_count = len(words)
+    
+    for term in terms:
+        term_count = words.count(term.lower())
+        term_tf = term_count / total_word_count if total_word_count > 0 else 0.0
+        term_counts[f'{term}_count'] = term_count
+        term_counts[f'{term}_tf'] = term_tf
+    
+    return term_counts, total_word_count
+
+def process_posts(submissions, subreddit_name, top_terms):
+    """
+    Process submissions to extract post information, term frequencies, and other relevant metrics.
+    
+    Parameters:
+    - submissions: List of post dictionaries for a subreddit
+    - subreddit_name: Name of the subreddit being processed (for display/clarity purposes)
+    - top_terms: List of terms for which to calculate term frequencies
+    
+    Returns:
+    - DataFrame with post data, including term counts, frequencies, and metadata.
+    """
+    data = []
+    
+    for i, post in enumerate(submissions):
+        # Initialize post data dictionary
+        post_data = {
+            'post_id': post.get('id', i),  # Use post 'id' if available; otherwise, fallback to index
+            'created_utc_unix': post['created_utc'],
+            'created_date': datetime.fromtimestamp(post['created_utc'], tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        # Preprocess text and calculate term frequencies
+        text = preprocess_text(post.get('selftext', ''))
+        term_counts, total_word_count = calculate_term_frequency(text, top_terms)
+        
+        # Update post_data with term counts and total word count
+        post_data.update(term_counts)
+        post_data['total_word_count'] = total_word_count
+        
+        data.append(post_data)
+    
+    # Create a DataFrame from the list of dictionaries
+    return pd.DataFrame(data)
