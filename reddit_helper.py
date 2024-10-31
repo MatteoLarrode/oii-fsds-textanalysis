@@ -203,3 +203,38 @@ def process_posts(submissions, subreddit_name, top_terms):
     
     # Create a DataFrame from the list of dictionaries
     return pd.DataFrame(data)
+
+def plot_top_words_freq(word_freq_df, top_terms, title='Daily Average TF of Top Words'):
+    """
+    Plot daily average term frequencies for the top words.
+    
+    Parameters:
+    - word_freq_df: DataFrame containing term frequencies by post.
+    - top_terms: List of top terms to include in the plot.
+    - title: Title for the plot.
+    """
+    # Convert 'created_date' to datetime if not already
+    if not pd.api.types.is_datetime64_any_dtype(word_freq_df['created_date']):
+        word_freq_df['created_date'] = pd.to_datetime(word_freq_df['created_date'])
+
+    # Extract date for daily aggregation
+    word_freq_df['date'] = word_freq_df['created_date'].dt.date
+
+    # Build term frequency columns dynamically based on top_terms
+    tf_columns = [f"{term}_tf" for term in top_terms if f"{term}_tf" in word_freq_df.columns]
+
+    # Calculate the daily average TF for the selected terms
+    daily_average_tf = word_freq_df.groupby('date')[tf_columns].mean().reset_index()
+
+    # Plotting
+    plt.figure(figsize=(12, 6))
+    for tf_col in tf_columns:
+        plt.plot(daily_average_tf['date'], daily_average_tf[tf_col], marker='o', label=tf_col.replace('_tf', ''))
+
+    plt.title(title)
+    plt.xlabel('Date')
+    plt.ylabel('Average TF')
+    plt.xticks(rotation=45)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
